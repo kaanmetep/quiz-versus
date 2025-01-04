@@ -1,0 +1,291 @@
+"use client";
+import { useState, useEffect } from "react";
+import { sampleQuestions } from "./questions";
+import { Crown } from "lucide-react";
+const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
+  const [countdown, setCountdown] = useState(null);
+  const [showQuestion, setShowQuestion] = useState(false);
+  const [nextQuestion, setNextQuestion] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [results, setResults] = useState(null);
+  const currentQuestion = sampleQuestions[gameRoomData.currentQuestionIndex];
+
+  useEffect(() => {
+    socket.on("playerAnswered", (data) => {
+      setGameRoomData((prev) => ({
+        ...prev,
+        currentQuestionIndex: data.currentQuestionIndex,
+        scores: data.scores,
+      }));
+    });
+    socket.on("nextQuestionReady", (data) => {
+      setNextQuestion(true);
+      setResults(data);
+      setSelectedOption(null);
+      console.log(data);
+    });
+    socket.on("nextQuestion", (data) => {
+      setGameRoomData((prev) => ({
+        ...prev,
+        currentQuestionIndex: data.currentQuestionIndex,
+        scores: data.scores,
+      }));
+      setNextQuestion(false);
+      setResults(null);
+      setSelectedOption(null);
+    });
+    socket.on("gameStarted", (data) => {
+      let count = 3;
+      setCountdown(count);
+      setSelectedOption(null);
+
+      const timer = setInterval(() => {
+        count -= 1;
+        if (count < 0) {
+          clearInterval(timer);
+          setCountdown(null);
+          setShowQuestion(true);
+        } else {
+          setCountdown(count);
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    });
+  }, []);
+
+  const handleAnswerClick = (selectedAnswer) => {
+    const currentUserStatus = gameRoomData.scores?.find(
+      (status) => status.memberId === uniqueId
+    );
+    if (currentUserStatus.answered !== null) return; // prevent multiple answers
+    setSelectedOption(selectedAnswer);
+    socket.emit("playerAnswer", gameRoomData.id, uniqueId, selectedAnswer);
+  };
+
+  const onReadyClick = () => {
+    if (gameRoomData.id) {
+      socket.emit("playerReady", gameRoomData.id.toString(), uniqueId);
+    }
+  };
+  const onNextQuestionClick = () => {
+    socket.emit("nextQuestion", gameRoomData.id);
+    setSelectedOption(null); // Reset selected option for next question
+  };
+  const sortScores = (scores) => {
+    const sortedScores = scores?.sort((a, b) => b.points - a.points);
+    return sortedScores;
+  };
+  return (
+    <div className="min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-800/70 via-slate-900 to-slate-800/70 p-6">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 lg:gap-0">
+          <div>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 tracking-wider font-orbitron">
+              Quiz Room: {gameRoomData.id}
+            </h1>
+            <p className="text-slate-400 mt-1 font-inter">
+              Category: {gameRoomData.category}
+            </p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col gap-2">
+            <p className="text-slate-300 text-sm font-inter">
+              Players: {gameRoomData.members.length}/{gameRoomData.maxPlayers}
+            </p>
+            <p className="text-slate-300 text-sm font-inter">
+              Players ready: {gameRoomData.readyPlayers.length}/
+              {gameRoomData.members.length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Players List */}
+        <div className="lg:col-span-1">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+            <h2 className="text-xl font-semibold text-slate-200 mb-4 tracking-wide">
+              Players
+            </h2>
+            <div className="space-y-3">
+              {gameRoomData.members.map(({ name, memberId }, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between space-x-3 bg-white/5 rounded-xl p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm lg:text-base">
+                      {name && name[0].toUpperCase()}
+                    </div>
+                    <span className="text-slate-200 text-sm lg:text-base">
+                      {name}
+                    </span>
+                  </div>
+
+                  {memberId === uniqueId &&
+                    (gameRoomData.readyPlayers.includes(memberId) ? (
+                      <span className="text-slate-400">Ready ✓</span>
+                    ) : (
+                      <button
+                        className="bg-indigo-300 py-1 px-4 rounded-md ml-auto hover:bg-indigo-400 transition-all delay-[50ms]"
+                        onClick={() => onReadyClick()}
+                      >
+                        Ready
+                      </button>
+                    ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Game Area */}
+        <div className="lg:col-span-3">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 h-[500px] lg:h-[600px] flex items-center justify-center">
+            <div className="text-center w-full max-w-md mx-auto">
+              {gameRoomData.members.length !== gameRoomData.maxPlayers ? (
+                <div>
+                  <h2 className="text-2xl font-semibold text-slate-200 mb-4 tracking-wide font-orbitron">
+                    Waiting for Players...
+                  </h2>
+                  <p className="text-slate-400 font-inter">
+                    Share the room code with your friends:{" "}
+                    <span className="font-mono bg-white/10 rounded-lg px-3 py-1 text-slate-200">
+                      {gameRoomData.id}
+                    </span>
+                  </p>
+                </div>
+              ) : gameRoomData.members.length === gameRoomData.maxPlayers &&
+                gameRoomData.readyPlayers.length !==
+                  gameRoomData.members.length ? (
+                <h2 className="text-2xl font-semibold text-slate-200 mb-4 tracking-wide font-orbitron">
+                  All players have to be ready to start the game!
+                </h2>
+              ) : countdown !== null ? (
+                <div className="transform transition-all duration-500 scale-150">
+                  <h2 className="text-6xl font-bold text-slate-200 animate-pulse font-orbitron">
+                    {countdown}
+                  </h2>
+                </div>
+              ) : showQuestion ? (
+                nextQuestion ? (
+                  <>
+                    <h2 className="text-2xl font-semibold text-slate-200 mb-4 tracking-wide font-orbitron">
+                      Answers:
+                    </h2>
+                    <div className="flex flex-col  space-y-4 w-full max-w-lg mx-auto">
+                      {sortScores(results.scores).map((score, index) => (
+                        <div
+                          key={index}
+                          className="bg-white/10 backdrop-blur-sm rounded-lg p-4 grid grid-cols-[2fr_1fr_1fr] gap-10  "
+                        >
+                          <div className="flex items-center  gap-2">
+                            <div className="bg-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ">
+                              {index + 1}
+                            </div>
+
+                            <p className="font-medium text-white text-sm lg:text-base">
+                              {
+                                gameRoomData.members?.find(
+                                  (member) => member.memberId === score.memberId
+                                )?.name
+                              }
+                            </p>
+                          </div>
+
+                          <div className="flex space-x-6 justify-center items-center ">
+                            <div className="text-center">
+                              <p className="text-xs text-gray-400">Answer</p>
+                              <p
+                                className={`${
+                                  score.answered ===
+                                  currentQuestion.correctAnswer
+                                    ? "text-green-500"
+                                    : "text-red-500"
+                                } text-xs lg:text-base`}
+                              >
+                                {score.answered}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-400">Points</p>
+                            <p className="font-bold text-yellow-500 text-xs lg:text-base">
+                              {score.points}
+                            </p>
+                          </div>
+                          {index === 0 && (
+                            <Crown className="w-8 h-8 text-yellow-500 absolute -top-4 -left-3" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-slate-400 mt-8">
+                      The correct answer is:{" "}
+                      <span className="font-bold text-green-500">
+                        {currentQuestion.correctAnswer}
+                      </span>
+                    </p>
+                    <button
+                      className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 text-white rounded-xl px-6 py-2 font-semibold tracking-wide hover:shadow-[0_0_30px_rgba(37,_99,_235,_0.5)] transition-all duration-300 hover:scale-[1.02] border border-blue-400/20 disabled:opacity-50 disabled:cursor-not-allowed mt-12"
+                      onClick={() => onNextQuestionClick()}
+                    >
+                      Next Question
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-8 w-full max-w-2xl">
+                    <h2 className="text-xl lg:text-3xl font-semibold text-slate-200 tracking-wide mb-12 font-orbitron">
+                      {currentQuestion.question}
+                    </h2>
+                    <div className="flex flex-col space-y-4">
+                      {currentQuestion.options.map((option, index) => (
+                        <button
+                          key={index}
+                          className={`w-full bg-white/10 py-6 px-8 rounded-xl text-slate-200 transition-all text-sm lg:text-lg text-left font-inter ${
+                            selectedOption === option
+                              ? "bg-indigo-400"
+                              : "hover:bg-white/20"
+                          }`}
+                          onClick={() => handleAnswerClick(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              ) : (
+                <h2 className="text-2xl font-semibold text-slate-200 mb-4 tracking-wide font-orbitron">
+                  Game is starting...
+                </h2>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto mt-6">
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex justify-between items-center">
+          <p className="text-slate-400 font-inter">
+            Made with love by{" "}
+            <a
+              href="https://github.com/kaanmetep"
+              className="text-indigo-500 hover:text-indigo-400 transition-colors border-b border-indigo-500"
+            >
+              me
+            </a>
+          </p>
+          <button className="text-red-400 hover:text-red-300 transition-colors">
+            Leave Room
+          </button>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Play;
