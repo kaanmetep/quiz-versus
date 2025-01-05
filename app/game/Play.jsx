@@ -8,6 +8,7 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
   const [nextQuestion, setNextQuestion] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [results, setResults] = useState(null);
+  const [gameEnded, setGameEnded] = useState(false);
   const currentQuestion = sampleQuestions[gameRoomData.currentQuestionIndex];
 
   useEffect(() => {
@@ -22,7 +23,6 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
       setNextQuestion(true);
       setResults(data);
       setSelectedOption(null);
-      console.log(data);
     });
     socket.on("nextQuestion", (data) => {
       setGameRoomData((prev) => ({
@@ -33,6 +33,10 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
       setNextQuestion(false);
       setResults(null);
       setSelectedOption(null);
+    });
+    socket.on("gameEnded", (data) => {
+      setGameEnded(true);
+      setResults(data);
     });
     socket.on("gameStarted", (data) => {
       let count = 3;
@@ -51,6 +55,17 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
       }, 1000);
 
       return () => clearInterval(timer);
+    });
+    socket.on("gameRestarted", (data) => {
+      console.log("lool");
+      console.log("gameRestarted", data);
+      setGameRoomData(data);
+      setGameEnded(false);
+      setResults(null);
+      setSelectedOption(null);
+      setShowQuestion(false);
+      setNextQuestion(false);
+      setCountdown(null);
     });
   }, []);
 
@@ -72,10 +87,14 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
     socket.emit("nextQuestion", gameRoomData.id);
     setSelectedOption(null); // Reset selected option for next question
   };
+  const onPlayAgainClick = () => {
+    socket.emit("playAgain", gameRoomData.id);
+  };
   const sortScores = (scores) => {
     const sortedScores = scores?.sort((a, b) => b.points - a.points);
     return sortedScores;
   };
+
   return (
     <div className="min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-800/70 via-slate-900 to-slate-800/70 p-6">
       {/* Header */}
@@ -170,10 +189,10 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
                   </h2>
                 </div>
               ) : showQuestion ? (
-                nextQuestion ? (
+                nextQuestion || gameEnded ? (
                   <>
                     <h2 className="text-2xl font-semibold text-slate-200 mb-4 tracking-wide font-orbitron">
-                      Answers:
+                      Answers
                     </h2>
                     <div className="flex flex-col  space-y-4 w-full max-w-lg mx-auto">
                       {sortScores(results.scores).map((score, index) => (
@@ -228,11 +247,22 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
                         {currentQuestion.correctAnswer}
                       </span>
                     </p>
+                    {gameEnded && (
+                      <p className="text-slate-400 mt-8 text-xl font-semibold">
+                        Game ended!
+                      </p>
+                    )}
                     <button
                       className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 text-white rounded-xl px-6 py-2 font-semibold tracking-wide hover:shadow-[0_0_30px_rgba(37,_99,_235,_0.5)] transition-all duration-300 hover:scale-[1.02] border border-blue-400/20 disabled:opacity-50 disabled:cursor-not-allowed mt-12"
-                      onClick={() => onNextQuestionClick()}
+                      onClick={
+                        !gameEnded
+                          ? () => onNextQuestionClick()
+                          : () => {
+                              onPlayAgainClick();
+                            }
+                      }
                     >
-                      Next Question
+                      {gameEnded ? "Play Again" : "Next Question"}
                     </button>
                   </>
                 ) : (

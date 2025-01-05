@@ -5,7 +5,12 @@ import {
   createGameRoomService,
   joinGameRoomService,
 } from "./server/services/roomService.js";
-import { sampleQuestions } from "./app/game/questions.js";
+import {
+  playerReadyService,
+  playerAnswerService,
+  playAgainService,
+  nextQuestionService,
+} from "./server/services/playerService.js";
 import { createUser } from "./server/models/User.js";
 
 export const gameRooms = new Map();
@@ -30,8 +35,7 @@ app.prepare().then(() => {
 
   io.on("connection", (socket) => {
     const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
-
-    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs..)
+    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise..)
 
     socket.on("createGameRoom", (name, category, maxPlayers) => {
       createGameRoomService(name, category, maxPlayers, socket);
@@ -40,63 +44,17 @@ app.prepare().then(() => {
       joinGameRoomService(name, groupId, socket, io);
     });
     socket.on("playerReady", (gameRoomId, uniqueId) => {
-      const userId = uniqueId;
-      const gameRoom = gameRooms.get(gameRoomId);
-
-      if (!gameRoom) {
-        console.log("Room not found:", gameRoomId);
-        return;
-      }
-      if (!gameRoom.readyPlayers.includes(userId)) {
-        gameRoom.readyPlayers.push(userId);
-        io.to(gameRoomId).emit("playerIsReady", gameRoom.readyPlayers);
-      }
-      if (
-        gameRoom.readyPlayers.length === gameRoom.members.length &&
-        !gameRoom.isGameStarted &&
-        gameRoom.maxPlayers === gameRoom.members.length
-      ) {
-        gameRoom.isGameStarted = true;
-        io.to(gameRoomId).emit("gameStarted", true);
-      }
+      playerReadyService(gameRoomId, uniqueId, io);
     });
-    socket.on("playerAnswer", (gameRoomId, uniqueId, answer) => {
-      const gameRoom = gameRooms.get(gameRoomId);
-      const userId = gameRoom.scores.find(
-        (score) => score.memberId === uniqueId
-      );
-      if (userId.answered !== null) {
-        return;
-      }
-      const currentQuestion = sampleQuestions[gameRoom.currentQuestionIndex];
-      userId.answered = answer;
-      if (currentQuestion.correctAnswer === answer) {
-        userId.points = userId.points + 5;
-      }
-      if (
-        gameRoom.scores.map((score) => score.answered).every(Boolean) &&
-        gameRoom.currentQuestionIndex < sampleQuestions.length - 1
-      ) {
-        io.to(gameRoomId).emit("nextQuestionReady", {
-          scores: gameRoom.scores,
-        });
-      }
-      io.to(gameRoomId).emit("playerAnswered", {
-        currentQuestionIndex: gameRoom.currentQuestionIndex,
-        scores: gameRoom.scores,
-      });
+    socket.on("playerAnswer", (gameRoomId, uniqueId, answer) =>
+      playerAnswerService(gameRoomId, uniqueId, answer, io)
+    );
+    socket.on("playAgain", (gameRoomId) => {
+      playAgainService(gameRoomId, io);
     });
-    socket.on("nextQuestion", (gameRoomId) => {
-      const gameRoom = gameRooms.get(gameRoomId);
-      gameRoom.currentQuestionIndex++;
-      gameRoom.scores.forEach((score) => {
-        score.answered = null;
-      });
-      io.to(gameRoomId).emit("nextQuestion", {
-        currentQuestionIndex: gameRoom.currentQuestionIndex,
-        scores: gameRoom.scores,
-      });
-    });
+    socket.on("nextQuestion", (gameRoomId) =>
+      nextQuestionService(gameRoomId, io)
+    );
     socket.on("disconnect", () => {
       users.delete(socket.id);
       for (const [groupId, group] of gameRooms.entries()) {
