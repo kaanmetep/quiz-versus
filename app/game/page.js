@@ -11,6 +11,7 @@ const Page = () => {
   const [gameRoomData, setGameRoomData] = useState(null);
   const [error, setError] = useState("");
   const [uniqueId, setUniqueId] = useState(null);
+
   useEffect(() => {
     const newSocket = io("http://localhost:3000", {
       transports: ["websocket", "polling"],
@@ -68,6 +69,7 @@ const Page = () => {
           socket={socket}
           uniqueId={uniqueId}
           setGameRoomData={setGameRoomData}
+          setOption={setOption}
         />
       ) : (
         <div className="min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-800/70 via-slate-900 to-slate-800/70 flex flex-col items-center justify-center p-4 relative overflow-hidden">
@@ -136,10 +138,11 @@ const Page = () => {
             <footer className="max-w-7xl mx-auto mt-6">
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex justify-between items-center">
                 <p className="text-slate-400 font-inter">
-                  Made with love by{" "}
+                  Made for fun by{" "}
                   <a
                     href="https://github.com/kaanmetep"
                     className="text-indigo-500 hover:text-indigo-400 transition-colors border-b border-indigo-500"
+                    target="_blank"
                   >
                     me
                   </a>

@@ -10,6 +10,7 @@ import {
   playerAnswerService,
   playAgainService,
   nextQuestionService,
+  userLeaveService,
 } from "./server/services/playerService.js";
 import { createUser } from "./server/models/User.js";
 
@@ -34,8 +35,9 @@ app.prepare().then(() => {
   });
 
   io.on("connection", (socket) => {
+    console.log("a user connected", socket.id);
     const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
-    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise..)
+    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise.. or it might not)
 
     socket.on("createGameRoom", (name, category, maxPlayers) => {
       createGameRoomService(name, category, maxPlayers, socket);
@@ -55,66 +57,9 @@ app.prepare().then(() => {
     socket.on("nextQuestion", (gameRoomId) =>
       nextQuestionService(gameRoomId, io)
     );
-    socket.on("disconnect", () => {
-      users.delete(socket.id);
-      for (const [groupId, group] of gameRooms.entries()) {
-        const memberIndex = group.members.findIndex(
-          (member) => member.socketId === socket.id
-        );
-        if (memberIndex !== -1) {
-          const gameRoom = gameRooms.get(groupId);
-          const disconnectedMember = group.members[memberIndex];
+    socket.on("leaveRoom", () => userLeaveService(true, socket)); // TODO: Maybe we should take gameRoomId from the client side. but either way its going to work because we have the socket id and we'll loop from GameRooms.
 
-          // Remove member
-          group.members.splice(memberIndex, 1);
-
-          // Remove from ready players if they were ready
-          const readyIndex = group.readyPlayers.indexOf(
-            disconnectedMember.memberId
-          );
-          if (readyIndex !== -1) {
-            group.readyPlayers.splice(readyIndex, 1);
-          }
-          // Remove from scores
-          const scoreIndex = group.scores.findIndex(
-            (score) => score.memberId === disconnectedMember.memberId
-          );
-          if (scoreIndex !== -1) {
-            group.scores.splice(scoreIndex, 1);
-          }
-          if (gameRoom.isGameStarted) {
-            gameRoom.isGameStarted = false;
-            gameRoom.scores.forEach((score) => {
-              score.points = 0;
-              score.answered = null;
-            });
-            gameRoom.currentQuestionIndex = 0;
-          }
-          // Update game room
-          gameRooms.set(groupId, {
-            ...group,
-            members: [...group.members],
-            readyPlayers: [...group.readyPlayers],
-            scores: [...group.scores],
-          });
-
-          // Send updated state to all members
-          io.to(groupId).emit("playerLeft", {
-            members: gameRoom.members.map((member) => ({
-              name: member.name,
-              memberId: member.memberId,
-            })),
-            readyPlayers: gameRoom.readyPlayers,
-            scores: gameRoom.scores,
-          });
-
-          if (gameRoom.members.length < 1) {
-            gameRooms.delete(groupId);
-          }
-          break;
-        }
-      }
-    });
+    socket.on("disconnect", () => userLeaveService(false, socket));
   });
   httpServer
     .once("error", (err) => {

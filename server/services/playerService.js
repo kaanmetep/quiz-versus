@@ -1,6 +1,7 @@
 import { gameRooms } from "../../server.mjs";
 import { sampleQuestions } from "../../app/game/questions.js";
 import { sendGameRoomToClient } from "../models/GameRoom.js";
+import { users } from "../../server.mjs";
 export const playerReadyService = (gameRoomId, uniqueId, io) => {
   const userId = uniqueId;
   const gameRoom = gameRooms.get(gameRoomId);
@@ -78,5 +79,68 @@ export const nextQuestionService = (gameRoomId, io) => {
       currentQuestionIndex: gameRoom.currentQuestionIndex,
       scores: gameRoom.scores,
     });
+  }
+};
+// buttonClicked is true when user clicks the leave room button. otherwise it means user disconnected from the socket. (closed the browser)
+export const userLeaveService = (buttonClicked = false, socket) => {
+  if (!buttonClicked) {
+    users.delete(socket.id);
+  }
+  for (const [groupId, group] of gameRooms.entries()) {
+    const memberIndex = group.members.findIndex(
+      (member) => member.socketId === socket.id
+    );
+    if (memberIndex !== -1) {
+      const gameRoom = gameRooms.get(groupId);
+      const disconnectedMember = group.members[memberIndex];
+
+      // Remove member
+      group.members.splice(memberIndex, 1);
+
+      // Remove from ready players if they were ready
+      const readyIndex = group.readyPlayers.indexOf(
+        disconnectedMember.memberId
+      );
+      if (readyIndex !== -1) {
+        group.readyPlayers.splice(readyIndex, 1);
+      }
+      // Remove from scores
+      const scoreIndex = group.scores.findIndex(
+        (score) => score.memberId === disconnectedMember.memberId
+      );
+      if (scoreIndex !== -1) {
+        group.scores.splice(scoreIndex, 1);
+      }
+      if (gameRoom.isGameStarted) {
+        gameRoom.isGameStarted = false;
+        gameRoom.scores.forEach((score) => {
+          score.points = 0;
+          score.answered = null;
+        });
+        gameRoom.currentQuestionIndex = 0;
+      }
+      // Update game room
+      gameRooms.set(groupId, {
+        ...group,
+        members: [...group.members],
+        readyPlayers: [...group.readyPlayers],
+        scores: [...group.scores],
+      });
+
+      // Send updated state to all members
+      socket.to(groupId).emit("playerLeft", {
+        members: gameRoom.members.map((member) => ({
+          name: member.name,
+          memberId: member.memberId,
+        })),
+        readyPlayers: gameRoom.readyPlayers,
+        scores: gameRoom.scores,
+      }); // send info to the remaining players. not the ones who left. (broadcasting)
+
+      if (gameRoom.members.length < 1) {
+        gameRooms.delete(groupId);
+      }
+      break;
+    }
   }
 };

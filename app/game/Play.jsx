@@ -2,7 +2,13 @@
 import { useState, useEffect } from "react";
 import { sampleQuestions } from "./questions";
 import { Crown } from "lucide-react";
-const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
+const Play = ({
+  setGameRoomData,
+  gameRoomData,
+  socket,
+  uniqueId,
+  setOption,
+}) => {
   const [countdown, setCountdown] = useState(null);
   const [showQuestion, setShowQuestion] = useState(false);
   const [nextQuestion, setNextQuestion] = useState(false);
@@ -89,6 +95,11 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
   };
   const onPlayAgainClick = () => {
     socket.emit("playAgain", gameRoomData.id);
+  };
+  const onLeaveRoomClick = () => {
+    socket.emit("leaveRoom", gameRoomData.id);
+    setGameRoomData(null);
+    setOption(null);
   };
   const sortScores = (scores) => {
     const sortedScores = scores?.sort((a, b) => b.points - a.points);
@@ -299,17 +310,11 @@ const Play = ({ setGameRoomData, gameRoomData, socket, uniqueId }) => {
 
       {/* Footer */}
       <footer className="max-w-7xl mx-auto mt-6">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex justify-between items-center">
-          <p className="text-slate-400 font-inter">
-            Made with love by{" "}
-            <a
-              href="https://github.com/kaanmetep"
-              className="text-indigo-500 hover:text-indigo-400 transition-colors border-b border-indigo-500"
-            >
-              me
-            </a>
-          </p>
-          <button className="text-red-400 hover:text-red-300 transition-colors">
+        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex justify-end items-center">
+          <button
+            className="text-red-400 hover:text-red-300 transition-colors"
+            onClick={() => onLeaveRoomClick()}
+          >
             Leave Room
           </button>
         </div>
