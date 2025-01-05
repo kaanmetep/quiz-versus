@@ -1,9 +1,16 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-import { nanoid } from "nanoid";
-import { v4 as uuidv4 } from "uuid";
+import {
+  createGameRoomService,
+  joinGameRoomService,
+} from "./server/services/roomService.js";
 import { sampleQuestions } from "./app/game/questions.js";
+import { createUser } from "./server/models/User.js";
+
+export const gameRooms = new Map();
+export const users = new Map();
+
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = 3000;
@@ -20,91 +27,17 @@ app.prepare().then(() => {
       credentials: true,
     },
   });
-  const gameRooms = new Map();
-  const users = new Map();
-  const createGameRoom = (socketId, name, category, maxPlayers, roomId) => {
-    const group = {
-      id: roomId,
-      members: [{ memberId: users.get(socketId), socketId, name }],
-      readyPlayers: [],
-      category: category,
-      maxPlayers: maxPlayers,
-      currentQuestionIndex: 0,
-      scores: [{ memberId: users.get(socketId), points: 0, answered: null }],
-      isGameStarted: false,
-    };
-    return group;
-  };
-  const createUser = (socketId) => {
-    const uniqueId = uuidv4();
-    users.set(socketId, uniqueId);
-    return uniqueId;
-  };
+
   io.on("connection", (socket) => {
     const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
-    socket.emit("uniqueId", uniqueId); // unique id'yi direkt boyle gonderme de, sorulunca gonder hesabi. ??? look at this later.
-    io.emit("newConnection", socket.id);
-    socket.on("createGameRoom", (name, category, maxPlayers) => {
-      const roomId = nanoid(6);
 
-      const gameRoom = createGameRoom(
-        socket.id,
-        name,
-        category,
-        maxPlayers,
-        roomId
-      );
-      gameRooms.set(roomId, gameRoom);
-      socket.join(roomId);
-      socket.emit("gameRoomCreated", {
-        id: gameRoom.id,
-        category: gameRoom.category,
-        maxPlayers: gameRoom.maxPlayers,
-        members: gameRoom.members.map((member) => ({
-          name: member.name,
-          memberId: member.memberId,
-        })),
-        readyPlayers: gameRoom.readyPlayers,
-        currentQuestionIndex: gameRoom.currentQuestionIndex,
-        scores: gameRoom.scores,
-      });
+    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs..)
+
+    socket.on("createGameRoom", (name, category, maxPlayers) => {
+      createGameRoomService(name, category, maxPlayers, socket);
     });
     socket.on("joinGroup", (name, groupId) => {
-      const gameRoom = gameRooms.get(groupId);
-      const socketId = socket.id;
-      if (gameRoom && gameRoom.members.length < gameRoom.maxPlayers) {
-        socket.join(groupId);
-        gameRoom.members.push({ memberId: uniqueId, socketId, name });
-        gameRoom.scores.push({
-          memberId: uniqueId,
-          points: 0,
-          answered: null,
-        });
-        io.to(groupId).emit("joinedGroup", {
-          id: gameRoom.id,
-          category: gameRoom.category,
-          maxPlayers: gameRoom.maxPlayers,
-          members: gameRoom.members.map((member) => ({
-            name: member.name,
-            memberId: member.memberId,
-          })),
-          readyPlayers: gameRoom.readyPlayers,
-          currentQuestionIndex: gameRoom.currentQuestionIndex,
-          scores: gameRoom.scores,
-        });
-      }
-      if (!gameRoom) {
-        socket.emit("joinedGroup", {
-          status: false,
-          message: "Game room does not exist!",
-        });
-      }
-      if (gameRoom && gameRoom.members.length >= gameRoom.maxPlayers) {
-        socket.emit("joinedGroup", {
-          status: false,
-          message: "This room is full!",
-        });
-      }
+      joinGameRoomService(name, groupId, socket, io);
     });
     socket.on("playerReady", (gameRoomId, uniqueId) => {
       const userId = uniqueId;
