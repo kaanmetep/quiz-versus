@@ -97,13 +97,14 @@ export const userLeaveService = (buttonClicked = false, socket) => {
       // Remove member
       group.members.splice(memberIndex, 1);
 
-      // Remove from ready players if they were ready
+      // Remove from ready players
       const readyIndex = group.readyPlayers.indexOf(
         disconnectedMember.memberId
       );
       if (readyIndex !== -1) {
         group.readyPlayers.splice(readyIndex, 1);
       }
+
       // Remove from scores
       const scoreIndex = group.scores.findIndex(
         (score) => score.memberId === disconnectedMember.memberId
@@ -111,6 +112,7 @@ export const userLeaveService = (buttonClicked = false, socket) => {
       if (scoreIndex !== -1) {
         group.scores.splice(scoreIndex, 1);
       }
+
       if (gameRoom.isGameStarted) {
         gameRoom.isGameStarted = false;
         gameRoom.scores.forEach((score) => {
@@ -118,16 +120,11 @@ export const userLeaveService = (buttonClicked = false, socket) => {
           score.answered = null;
         });
         gameRoom.currentQuestionIndex = 0;
+        console.log("game baslamisken birisi ayrildi");
+        console.log(gameRoom.scores);
       }
-      // Update game room
-      gameRooms.set(groupId, {
-        ...group,
-        members: [...group.members],
-        readyPlayers: [...group.readyPlayers],
-        scores: [...group.scores],
-      });
 
-      // Send updated state to all members
+      // send info to the remaining players. not the ones who left. (broadcasting)
       socket.to(groupId).emit("playerLeft", {
         members: gameRoom.members.map((member) => ({
           name: member.name,
@@ -135,7 +132,7 @@ export const userLeaveService = (buttonClicked = false, socket) => {
         })),
         readyPlayers: gameRoom.readyPlayers,
         scores: gameRoom.scores,
-      }); // send info to the remaining players. not the ones who left. (broadcasting)
+      });
 
       if (gameRoom.members.length < 1) {
         gameRooms.delete(groupId);

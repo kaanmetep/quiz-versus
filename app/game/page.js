@@ -11,7 +11,8 @@ const Page = () => {
   const [gameRoomData, setGameRoomData] = useState(null);
   const [error, setError] = useState("");
   const [uniqueId, setUniqueId] = useState(null);
-
+  const [results, setResults] = useState(null);
+  const [nextQuestion, setNextQuestion] = useState(false); // this becomes true when both users answer the question.
   useEffect(() => {
     const newSocket = io("http://localhost:3000", {
       transports: ["websocket", "polling"],
@@ -42,6 +43,8 @@ const Page = () => {
       setGameRoomData(data);
     });
     newSocket.on("playerLeft", (data) => {
+      setResults(null);
+      setNextQuestion(false);
       setGameRoomData((prev) => ({
         ...prev,
         members: data.members,
@@ -57,7 +60,6 @@ const Page = () => {
     });
 
     setSocket(newSocket);
-
     return () => newSocket.close();
   }, []);
 
@@ -70,6 +72,10 @@ const Page = () => {
           uniqueId={uniqueId}
           setGameRoomData={setGameRoomData}
           setOption={setOption}
+          results={results}
+          setResults={setResults}
+          nextQuestion={nextQuestion}
+          setNextQuestion={setNextQuestion}
         />
       ) : (
         <div className="min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-800/70 via-slate-900 to-slate-800/70 flex flex-col items-center justify-center p-4 relative overflow-hidden">

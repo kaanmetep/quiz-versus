@@ -8,12 +8,14 @@ const Play = ({
   socket,
   uniqueId,
   setOption,
+  results,
+  setResults,
+  nextQuestion,
+  setNextQuestion,
 }) => {
   const [countdown, setCountdown] = useState(null);
   const [showQuestion, setShowQuestion] = useState(false);
-  const [nextQuestion, setNextQuestion] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [results, setResults] = useState(null);
   const [gameEnded, setGameEnded] = useState(false);
   const currentQuestion = sampleQuestions[gameRoomData.currentQuestionIndex];
 
@@ -206,7 +208,7 @@ const Play = ({
                       Answers
                     </h2>
                     <div className="flex flex-col  space-y-4 w-full max-w-lg mx-auto">
-                      {sortScores(results.scores).map((score, index) => (
+                      {sortScores(results?.scores)?.map((score, index) => (
                         <div
                           key={index}
                           className="bg-white/10 backdrop-blur-sm rounded-lg p-4 grid grid-cols-[2fr_1fr_1fr] gap-10  "
