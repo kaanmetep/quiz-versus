@@ -13,6 +13,7 @@ const Page = () => {
   const [uniqueId, setUniqueId] = useState(null);
   const [results, setResults] = useState(null);
   const [nextQuestion, setNextQuestion] = useState(false); // this becomes true when both users answer the question.
+  const [gameEnded, setGameEnded] = useState(false);
   useEffect(() => {
     const newSocket = io("http://localhost:3000", {
       transports: ["websocket", "polling"],
@@ -45,6 +46,7 @@ const Page = () => {
     newSocket.on("playerLeft", (data) => {
       setResults(null);
       setNextQuestion(false);
+      setGameEnded(false);
       setGameRoomData((prev) => ({
         ...prev,
         members: data.members,
@@ -76,6 +78,8 @@ const Page = () => {
           setResults={setResults}
           nextQuestion={nextQuestion}
           setNextQuestion={setNextQuestion}
+          gameEnded={gameEnded}
+          setGameEnded={setGameEnded}
         />
       ) : (
         <div className="min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-800/70 via-slate-900 to-slate-800/70 flex flex-col items-center justify-center p-4 relative overflow-hidden">

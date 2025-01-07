@@ -120,8 +120,6 @@ export const userLeaveService = (buttonClicked = false, socket) => {
           score.answered = null;
         });
         gameRoom.currentQuestionIndex = 0;
-        console.log("game baslamisken birisi ayrildi");
-        console.log(gameRoom.scores);
       }
 
       // send info to the remaining players. not the ones who left. (broadcasting)

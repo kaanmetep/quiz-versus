@@ -2,4 +2,4 @@
 
 // oyunculari her sorudan sonra en yuksek skordan en asagi skora dogru sirala. en yukse oyuncunun yanina kral taci koy. --> done
 
-// user'in socketid ve unique id'sini localstorageye belirli bir sureyle kaydedebiliriz...!!!!!
+// user'in socketid ve unique id'sini localstorageye belirli bir sureyle kaydedebiliriz...!
