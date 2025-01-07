@@ -23,8 +23,8 @@ const Play = ({
   const [countdown, setCountdown] = useState(null);
   const [showQuestion, setShowQuestion] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(null);
   const currentQuestion = sampleQuestions[gameRoomData.currentQuestionIndex];
-
   useEffect(() => {
     socket.on("playerAnswered", (data) => {
       setGameRoomData((prev) => ({
@@ -74,12 +74,16 @@ const Play = ({
           clearInterval(timer);
           setCountdown(null);
           setShowQuestion(true);
+          socket.emit("startTimer", gameRoomData.id);
         } else {
           setCountdown(count);
         }
       }, 1000);
 
       return () => clearInterval(timer);
+    });
+    socket.on("remainingTime", (data) => {
+      setRemainingTime(data);
     });
   }, []);
 
@@ -104,7 +108,7 @@ const Play = ({
         />
         {/* Game Area */}
         <div className="lg:col-span-3">
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 h-[500px] lg:h-[600px] flex items-center justify-center">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 h-[500px] lg:h-[600px] flex items-center justify-center relative">
             <div className="text-center w-full max-w-md mx-auto">
               {gameRoomData?.members?.length !== gameRoomData?.maxPlayers ? (
                 <RoomNotFull gameRoomData={gameRoomData} />
@@ -136,6 +140,8 @@ const Play = ({
                     gameRoomData={gameRoomData}
                     setSelectedOption={setSelectedOption}
                     uniqueId={uniqueId}
+                    remainingTime={remainingTime}
+                    gameEnded={gameEnded}
                   />
                 )
               ) : (

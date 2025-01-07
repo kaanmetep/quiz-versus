@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import {
   createGameRoomService,
   joinGameRoomService,
+  startTimerService,
 } from "./server/services/roomService.js";
 import {
   playerReadyService,
@@ -57,6 +58,8 @@ app.prepare().then(() => {
     socket.on("nextQuestion", (gameRoomId) =>
       nextQuestionService(gameRoomId, io)
     );
+    socket.on("startTimer", (gameRoomId) => startTimerService(gameRoomId, io));
+
     socket.on("leaveRoom", () => userLeaveService(true, socket)); // TODO: Maybe we should take gameRoomId from the client side. but either way its going to work because we have the socket id and we'll loop from GameRooms.
 
     socket.on("disconnect", () => userLeaveService(false, socket));

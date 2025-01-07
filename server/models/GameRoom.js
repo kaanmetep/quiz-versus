@@ -15,6 +15,8 @@ export const createGameRoom = (
     currentQuestionIndex: 0,
     scores: [{ memberId: users.get(socketId), points: 0, answered: null }],
     isGameStarted: false,
+    questionDuration: 10,
+    timer: null,
   };
   return group;
 };
@@ -34,5 +36,6 @@ export const sendGameRoomToClient = (gameRoom) => {
     readyPlayers: gameRoom.readyPlayers,
     currentQuestionIndex: gameRoom.currentQuestionIndex,
     scores: gameRoom.scores,
+    questionDuration: gameRoom.questionDuration,
   };
 };

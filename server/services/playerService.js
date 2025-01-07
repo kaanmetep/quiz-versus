@@ -35,22 +35,28 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
   if (currentQuestion.correctAnswer === answer) {
     userObject.points = userObject.points + 5;
   }
-  if (
-    gameRoom.scores.map((score) => score.answered).every(Boolean) &&
-    gameRoom.currentQuestionIndex < sampleQuestions.length - 1
-  ) {
-    io.to(gameRoomId).emit("nextQuestionReady", {
-      scores: gameRoom.scores,
-    });
+
+  const allPlayersAnswered = gameRoom.scores.every(
+    (score) => score.answered !== null
+  );
+
+  if (allPlayersAnswered) {
+    if (gameRoom.timer) {
+      clearInterval(gameRoom.timer);
+    }
+    gameRoom.questionDuration = 10;
+
+    if (gameRoom.currentQuestionIndex < sampleQuestions.length - 1) {
+      io.to(gameRoomId).emit("nextQuestionReady", {
+        scores: gameRoom.scores,
+      });
+    } else {
+      io.to(gameRoomId).emit("gameEnded", {
+        scores: gameRoom.scores,
+      });
+    }
   }
-  if (
-    gameRoom.scores.map((score) => score.answered).every(Boolean) &&
-    gameRoom.currentQuestionIndex === sampleQuestions.length - 1
-  ) {
-    io.to(gameRoomId).emit("gameEnded", {
-      scores: gameRoom.scores,
-    });
-  }
+
   io.to(gameRoomId).emit("playerAnswered", {
     currentQuestionIndex: gameRoom.currentQuestionIndex,
     scores: gameRoom.scores,
@@ -58,6 +64,12 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
 };
 export const playAgainService = (gameRoomId, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
+
+  // Clear existing timer if any
+  if (gameRoom.timer) {
+    clearInterval(gameRoom.timer);
+  }
+
   gameRoom.currentQuestionIndex = 0;
   gameRoom.scores.forEach((score) => {
     score.answered = null;
@@ -65,6 +77,7 @@ export const playAgainService = (gameRoomId, io) => {
   });
   gameRoom.readyPlayers = [];
   gameRoom.isGameStarted = false;
+  gameRoom.questionDuration = 10;
   io.to(gameRoomId).emit("gameRestarted", sendGameRoomToClient(gameRoom));
 };
 
@@ -75,6 +88,7 @@ export const nextQuestionService = (gameRoomId, io) => {
     gameRoom.scores.forEach((score) => {
       score.answered = null;
     });
+    gameRoom.questionDuration = 10;
     io.to(gameRoomId).emit("nextQuestion", {
       currentQuestionIndex: gameRoom.currentQuestionIndex,
       scores: gameRoom.scores,
@@ -93,6 +107,11 @@ export const userLeaveService = (buttonClicked = false, socket) => {
     if (memberIndex !== -1) {
       const gameRoom = gameRooms.get(groupId);
       const disconnectedMember = group.members[memberIndex];
+
+      // Clear timer when player leaves
+      if (gameRoom.timer) {
+        clearInterval(gameRoom.timer);
+      }
 
       // Remove member
       group.members.splice(memberIndex, 1);
@@ -120,6 +139,7 @@ export const userLeaveService = (buttonClicked = false, socket) => {
           score.answered = null;
         });
         gameRoom.currentQuestionIndex = 0;
+        gameRoom.questionDuration = 10;
       }
 
       // send info to the remaining players. not the ones who left. (broadcasting)

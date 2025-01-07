@@ -10,6 +10,7 @@ const Answers = ({
   const onNextQuestionClick = () => {
     socket.emit("nextQuestion", gameRoomData.id);
     setSelectedOption(null); // Reset selected option for next question
+    socket.emit("startTimer", gameRoomData.id);
   };
   const onPlayAgainClick = () => {
     socket.emit("playAgain", gameRoomData.id);

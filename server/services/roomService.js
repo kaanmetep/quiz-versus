@@ -3,6 +3,7 @@ import { createGameRoom } from "../models/GameRoom.js";
 import { gameRooms } from "../../server.mjs";
 import { sendGameRoomToClient } from "../models/GameRoom.js";
 import { users } from "../../server.mjs";
+import { sampleQuestions } from "../../app/game/questions.js";
 export const createGameRoomService = (name, category, maxPlayers, socket) => {
   const roomId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 5)();
   const gameRoom = createGameRoom(
@@ -41,4 +42,36 @@ export const joinGameRoomService = (name, groupId, socket, io) => {
       message: "This room is full!",
     });
   }
+};
+export const startTimerService = (gameRoomId, io) => {
+  const gameRoom = gameRooms.get(gameRoomId);
+
+  // Clear any existing timer first
+  if (gameRoom.timer) {
+    clearInterval(gameRoom.timer);
+  }
+
+  // Emit initial time immediately
+  io.to(gameRoomId).emit("remainingTime", gameRoom.questionDuration);
+
+  gameRoom.timer = setInterval(() => {
+    gameRoom.questionDuration -= 1;
+
+    if (gameRoom.questionDuration < 0) {
+      clearInterval(gameRoom.timer);
+      gameRoom.questionDuration = 10;
+      if (gameRoom.currentQuestionIndex < sampleQuestions.length - 1) {
+        io.to(gameRoomId).emit("nextQuestionReady", {
+          scores: gameRoom.scores,
+        });
+      } else {
+        io.to(gameRoomId).emit("gameEnded", {
+          scores: gameRoom.scores,
+        });
+      }
+      return;
+    }
+
+    io.to(gameRoomId).emit("remainingTime", gameRoom.questionDuration);
+  }, 1000);
 };

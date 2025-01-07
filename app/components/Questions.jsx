@@ -5,6 +5,8 @@ const Questions = ({
   gameRoomData,
   setSelectedOption,
   uniqueId,
+  remainingTime,
+  gameEnded,
 }) => {
   const handleAnswerClick = (selectedAnswer) => {
     const currentUserStatus = gameRoomData.scores?.find(
@@ -17,6 +19,13 @@ const Questions = ({
 
   return (
     <div className="space-y-8 w-full max-w-2xl">
+      <div className="absolute top-2 right-2">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 w-[80px] h-[80px] flex items-center justify-center">
+          <p className="text-4xl font-bold text-slate-200 font-orbitron tabular-nums">
+            {!gameEnded && remainingTime}
+          </p>
+        </div>
+      </div>
       <h2 className="text-xl lg:text-3xl font-semibold text-slate-200 tracking-wide mb-12 font-orbitron">
         {currentQuestion.question}
       </h2>
