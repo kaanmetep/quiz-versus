@@ -24,26 +24,31 @@ const LIMITS = {
 };
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
-const port = 3000;
-// when using middleware `hostname` and `port` must be provided below
-const app = next({ dev, hostname, port });
+const port = process.env.PORT || 3000;
+const hostname = dev ? "localhost" : undefined;
+
+const app = next({
+  dev,
+  ...(dev ? { hostname, port } : {}),
+});
 const handler = app.getRequestHandler();
 
 app.prepare().then(() => {
   const httpServer = createServer(handler);
   const io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: dev
+        ? "http://localhost:3000"
+        : ["https://quiz-versus.up.railway.app"],
       methods: ["GET", "POST"],
       credentials: true,
     },
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   io.use((socket, next) => {
     const ip = socket.handshake.address;
-
-    // Check current connection amount
     const currentCount = connectionCounts.get(ip) || 0;
 
     if (currentCount >= LIMITS.MAX_CONNECTIONS_PER_IP) {
@@ -65,8 +70,8 @@ app.prepare().then(() => {
   });
 
   io.on("connection", (socket) => {
-    const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
-    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise.. or it might not)
+    const uniqueId = createUser(socket.id);
+    socket.emit("uniqueId", uniqueId);
 
     socket.on("createGameRoom", (name, category, maxPlayers) => {
       createGameRoomService(name, category, maxPlayers, socket);
@@ -87,17 +92,18 @@ app.prepare().then(() => {
       nextQuestionService(gameRoomId, io)
     );
     socket.on("startTimer", (gameRoomId) => startTimerService(gameRoomId, io));
-
-    socket.on("leaveRoom", () => userLeaveService(true, socket)); // TODO: Maybe we should take gameRoomId from the client side. but either way its going to work because we have the socket id and we'll loop from GameRooms.
-
+    socket.on("leaveRoom", () => userLeaveService(true, socket));
     socket.on("disconnect", () => userLeaveService(false, socket));
   });
+
   httpServer
     .once("error", (err) => {
       console.error(err);
       process.exit(1);
     })
     .listen(port, () => {
-      console.log(`> Ready on http://${hostname}:${port}`);
+      console.log(
+        `> Server running on port: ${port} in ${process.env.NODE_ENV} mode`
+      );
     });
 });
