@@ -37,9 +37,7 @@ app.prepare().then(() => {
   const httpServer = createServer(handler);
   const io = new Server(httpServer, {
     cors: {
-      origin: dev
-        ? "http://localhost:3000"
-        : ["https://quiz-versus.up.railway.app"],
+      origin: "*",
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -48,7 +46,8 @@ app.prepare().then(() => {
   });
 
   io.use((socket, next) => {
-    const ip = socket.handshake.address;
+    const ip =
+      socket.handshake.headers["x-forwarded-for"] || socket.handshake.address;
     const currentCount = connectionCounts.get(ip) || 0;
 
     if (currentCount >= LIMITS.MAX_CONNECTIONS_PER_IP) {
