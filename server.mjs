@@ -17,6 +17,11 @@ import { createUser } from "./server/models/User.js";
 
 export const gameRooms = new Map();
 export const users = new Map();
+const connectionCounts = new Map();
+const LIMITS = {
+  MAX_CONNECTIONS_PER_IP: 5,
+  CONNECTION_TIMEOUT: 1000 * 60 * 60, // 1 saat
+};
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -35,8 +40,31 @@ app.prepare().then(() => {
     },
   });
 
+  io.use((socket, next) => {
+    const ip = socket.handshake.address;
+
+    // Check current connection amount
+    const currentCount = connectionCounts.get(ip) || 0;
+
+    if (currentCount >= LIMITS.MAX_CONNECTIONS_PER_IP) {
+      return next(new Error("Too many connections from this IP"));
+    }
+
+    connectionCounts.set(ip, currentCount + 1);
+
+    socket.on("disconnect", () => {
+      const newCount = connectionCounts.get(ip) - 1;
+      if (newCount <= 0) {
+        connectionCounts.delete(ip);
+      } else {
+        connectionCounts.set(ip, newCount);
+      }
+    });
+
+    next();
+  });
+
   io.on("connection", (socket) => {
-    console.log("a user connected", socket.id);
     const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
     socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise.. or it might not)
 

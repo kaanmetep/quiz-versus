@@ -88,7 +88,7 @@ const Page = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_400px_at_70%_80%,#8B5CF640,transparent)]"></div>
 
           <div className="w-full max-w-4xl relative z-10">
-            <h1 className="text-center text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 mb-2 drop-shadow-lg tracking-wider font-orbitron">
+            <h1 className="text-center text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 mb-2 drop-shadow-lg tracking-wider font-orbitron">
               Quiz Versus
             </h1>
             <p className="text-center text-slate-400 mb-12 text-lg tracking-wide">

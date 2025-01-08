@@ -28,7 +28,7 @@ const Answers = ({
         {sortScores(results?.scores)?.map((score, index) => (
           <div
             key={index}
-            className="bg-white/10 backdrop-blur-sm rounded-lg p-4 grid grid-cols-[2fr_1fr_1fr] gap-10  "
+            className="bg-white/10 backdrop-blur-sm rounded-lg p-4 grid grid-cols-[2fr_1fr_1fr] gap-10 relative"
           >
             <div className="flex items-center  gap-2">
               <div className="bg-indigo-600 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ">
