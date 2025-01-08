@@ -27,10 +27,7 @@ const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
 const hostname = dev ? "localhost" : undefined;
 
-const app = next({
-  dev,
-  ...(dev ? { hostname, port } : {}),
-});
+const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
 app.prepare().then(() => {
@@ -46,8 +43,7 @@ app.prepare().then(() => {
   });
 
   io.use((socket, next) => {
-    const ip =
-      socket.handshake.headers["x-forwarded-for"] || socket.handshake.address;
+    const ip = socket.handshake.address;
     const currentCount = connectionCounts.get(ip) || 0;
 
     if (currentCount >= LIMITS.MAX_CONNECTIONS_PER_IP) {
@@ -100,7 +96,7 @@ app.prepare().then(() => {
       console.error(err);
       process.exit(1);
     })
-    .listen(port, () => {
+    .listen(port, "0.0.0.0", () => {
       console.log(
         `> Server running on port: ${port} in ${process.env.NODE_ENV} mode`
       );
