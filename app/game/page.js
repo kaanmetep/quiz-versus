@@ -3,6 +3,10 @@ import io from "socket.io-client";
 import { useEffect, useState } from "react";
 import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
+const socketURL =
+  process.env.NODE_ENV === "production"
+    ? "https://quiz-versus.onrender.com" // Render URL'iniz
+    : "http://localhost:3000"; // Local development URL
 
 import Play from "./Play";
 const Page = () => {
@@ -15,7 +19,7 @@ const Page = () => {
   const [nextQuestion, setNextQuestion] = useState(false); // this becomes true when both users answer the question.
   const [gameEnded, setGameEnded] = useState(false);
   useEffect(() => {
-    const newSocket = io("http://localhost:3000", {
+    const newSocket = io(socketURL, {
       transports: ["websocket", "polling"],
       withCredentials: true,
       autoConnect: true,
