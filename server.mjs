@@ -36,7 +36,7 @@ app.prepare().then(() => {
     cors: {
       origin:
         process.env.NODE_ENV === "production"
-          ? ["https://quiz-versus.up.railway.app"]
+          ? ["https://quiz-versus.onrender.com"]
           : ["http://localhost:3000"],
       methods: ["GET", "POST"],
       credentials: true,
