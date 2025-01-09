@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon server.mjs --watch server.mjs --watch pages --watch components --watch styles",
     "build": "next build",
-    "start": "node server.mjs",
+    "start": "NODE_ENV=production node server.mjs",
     "lint": "next lint"
   },
   "dependencies": {

@@ -25,7 +25,7 @@ const LIMITS = {
 
 const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
-const hostname = dev ? "localhost" : undefined;
+const hostname = "localhost";
 
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
@@ -34,7 +34,10 @@ app.prepare().then(() => {
   const httpServer = createServer(handler);
   const io = new Server(httpServer, {
     cors: {
-      origin: "*",
+      origin:
+        process.env.NODE_ENV === "production"
+          ? ["https://quiz-versus.up.railway.app"]
+          : ["http://localhost:3000"],
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -65,8 +68,8 @@ app.prepare().then(() => {
   });
 
   io.on("connection", (socket) => {
-    const uniqueId = createUser(socket.id);
-    socket.emit("uniqueId", uniqueId);
+    const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
+    socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise.. or it might not)
 
     socket.on("createGameRoom", (name, category, maxPlayers) => {
       createGameRoomService(name, category, maxPlayers, socket);
@@ -87,7 +90,7 @@ app.prepare().then(() => {
       nextQuestionService(gameRoomId, io)
     );
     socket.on("startTimer", (gameRoomId) => startTimerService(gameRoomId, io));
-    socket.on("leaveRoom", () => userLeaveService(true, socket));
+    socket.on("leaveRoom", () => userLeaveService(true, socket)); // TODO: Maybe we should take gameRoomId from the client side. but either way its going to work because we have the socket id and we'll loop from GameRooms.
     socket.on("disconnect", () => userLeaveService(false, socket));
   });
 
