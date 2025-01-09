@@ -45,27 +45,27 @@ app.prepare().then(() => {
     pingInterval: 25000,
   });
 
-  io.use((socket, next) => {
-    const ip = socket.handshake.address;
-    const currentCount = connectionCounts.get(ip) || 0;
+  // io.use((socket, next) => {
+  //   const ip = socket.handshake.address;
+  //   const currentCount = connectionCounts.get(ip) || 0;
 
-    if (currentCount >= LIMITS.MAX_CONNECTIONS_PER_IP) {
-      return next(new Error("Too many connections from this IP"));
-    }
+  //   if (currentCount >= LIMITS.MAX_CONNECTIONS_PER_IP) {
+  //     return next(new Error("Too many connections from this IP"));
+  //   }
 
-    connectionCounts.set(ip, currentCount + 1);
+  //   connectionCounts.set(ip, currentCount + 1);
 
-    socket.on("disconnect", () => {
-      const newCount = connectionCounts.get(ip) - 1;
-      if (newCount <= 0) {
-        connectionCounts.delete(ip);
-      } else {
-        connectionCounts.set(ip, newCount);
-      }
-    });
+  //   socket.on("disconnect", () => {
+  //     const newCount = connectionCounts.get(ip) - 1;
+  //     if (newCount <= 0) {
+  //       connectionCounts.delete(ip);
+  //     } else {
+  //       connectionCounts.set(ip, newCount);
+  //     }
+  //   });
 
-    next();
-  });
+  //   next();
+  // });
 
   io.on("connection", (socket) => {
     const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
