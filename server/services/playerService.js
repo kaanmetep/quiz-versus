@@ -21,7 +21,15 @@ export const playerReadyService = async (gameRoomId, uniqueId, io) => {
   ) {
     gameRoom.isGameStarted = true;
     questions = await fetchQuestions(gameRoom.category);
-    io.to(gameRoomId).emit("gameStarted", questions);
+    io.to(gameRoomId).emit(
+      "gameStarted",
+      questions.map((q) => ({
+        id: q.id,
+        question: q.question,
+        options: q.options,
+        category_id: q.category_id,
+      }))
+    );
   }
 };
 export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
@@ -49,8 +57,11 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
     gameRoom.questionDuration = 10;
 
     if (gameRoom.currentQuestionIndex < questions.length - 1) {
+      console.log(gameRoom.currentQuestionIndex);
+      console.log(questions[gameRoom.currentQuestionIndex]);
       io.to(gameRoomId).emit("nextQuestionReady", {
         scores: gameRoom.scores,
+        correctAnswer: questions[gameRoom.currentQuestionIndex].correctAnswer,
       });
     } else {
       io.to(gameRoomId).emit("gameEnded", {

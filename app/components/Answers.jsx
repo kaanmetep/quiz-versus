@@ -6,6 +6,7 @@ const Answers = ({
   gameEnded,
   socket,
   setSelectedOption,
+  correctAnswer,
 }) => {
   const onNextQuestionClick = () => {
     socket.emit("nextQuestion", gameRoomData.id);
@@ -25,7 +26,7 @@ const Answers = ({
         Answers
       </h2>
       <div className="flex flex-col  space-y-4 w-full max-w-lg mx-auto">
-        {sortScores(results?.scores)?.map((score, index) => (
+        {sortScores(results)?.map((score, index) => (
           <div
             key={index}
             className="bg-white/10 backdrop-blur-sm rounded-lg p-4 grid grid-cols-[2fr_1fr_1fr] gap-10 relative"
@@ -49,7 +50,7 @@ const Answers = ({
                 <p className="text-xs text-gray-400">Answer</p>
                 <p
                   className={`${
-                    score.answered === currentQuestion.correctAnswer
+                    score.answered === correctAnswer
                       ? "text-green-500"
                       : "text-red-500"
                   } text-xs lg:text-base`}
@@ -72,9 +73,7 @@ const Answers = ({
       </div>
       <p className="text-slate-400 mt-8">
         The correct answer is:{" "}
-        <span className="font-bold text-green-500">
-          {currentQuestion.correctAnswer}
-        </span>
+        <span className="font-bold text-green-500">{correctAnswer}</span>
       </p>
       {gameEnded && (
         <p className="text-slate-400 mt-8 text-xl font-semibold">Game ended!</p>

@@ -24,6 +24,7 @@ const Play = ({
   const [selectedOption, setSelectedOption] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
   const [questions, setQuestions] = useState(null);
+  const [correctAnswer, setCorrectAnswer] = useState(null);
   const currentQuestion = questions
     ? questions[gameRoomData.currentQuestionIndex]
     : null;
@@ -37,7 +38,8 @@ const Play = ({
     });
     socket.on("nextQuestionReady", (data) => {
       setNextQuestion(true);
-      setResults(data);
+      setResults(data.scores);
+      setCorrectAnswer(data.correctAnswer);
       setSelectedOption(null);
     });
     socket.on("nextQuestion", (data) => {
@@ -135,6 +137,7 @@ const Play = ({
                     gameEnded={gameEnded}
                     socket={socket}
                     setSelectedOption={setSelectedOption}
+                    correctAnswer={correctAnswer}
                   />
                 ) : (
                   <Questions

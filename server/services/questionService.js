@@ -1,5 +1,4 @@
 import supabase from "../../utils/supabase.js";
-
 export const fetchQuestions = async (category) => {
   const categories = new Map([
     ["general", 1],
