@@ -117,7 +117,6 @@ const CreateRoom = ({ setOption, socket }) => {
               <option value="general">General Knowledge</option>
               <option value="science">Science</option>
               <option value="history">History</option>
-              <option value="sports">Sports</option>
               <option value="movies">Movies & TV</option>
             </select>
           </div>

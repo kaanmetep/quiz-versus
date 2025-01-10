@@ -5,8 +5,8 @@ import CreateRoom from "./CreateRoom";
 import JoinRoom from "./JoinRoom";
 const socketURL =
   process.env.NODE_ENV === "production"
-    ? "https://quiz-versus.onrender.com" // Render URL'iniz
-    : "http://localhost:3000"; // Local development URL
+    ? "https://quiz-versus.onrender.com"
+    : "http://localhost:3000";
 
 import Play from "./Play";
 const Page = () => {

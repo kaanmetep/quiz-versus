@@ -6,7 +6,6 @@ import RoomFullPlayersNotReady from "@/app/components/RoomFullPlayersNotReady";
 import Answers from "@/app/components/Answers";
 import Questions from "@/app/components/Questions";
 import { useState, useEffect } from "react";
-import { sampleQuestions } from "./questions";
 const Play = ({
   setGameRoomData,
   gameRoomData,
@@ -24,7 +23,10 @@ const Play = ({
   const [showQuestion, setShowQuestion] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
-  const currentQuestion = sampleQuestions[gameRoomData.currentQuestionIndex];
+  const [questions, setQuestions] = useState(null);
+  const currentQuestion = questions
+    ? questions[gameRoomData.currentQuestionIndex]
+    : null;
   useEffect(() => {
     socket.on("playerAnswered", (data) => {
       setGameRoomData((prev) => ({
@@ -64,6 +66,8 @@ const Play = ({
       setCountdown(null);
     });
     socket.on("gameStarted", (data) => {
+      console.log("gameStarted", data);
+      setQuestions(data);
       let count = 3;
       setCountdown(count);
       setSelectedOption(null);

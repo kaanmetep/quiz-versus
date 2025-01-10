@@ -1,8 +1,9 @@
 import { gameRooms } from "../../server.mjs";
-import { sampleQuestions } from "../../app/game/questions.js";
 import { sendGameRoomToClient } from "../models/GameRoom.js";
 import { users } from "../../server.mjs";
-export const playerReadyService = (gameRoomId, uniqueId, io) => {
+import { fetchQuestions } from "./questionService.js";
+let questions = [];
+export const playerReadyService = async (gameRoomId, uniqueId, io) => {
   const userId = uniqueId;
   const gameRoom = gameRooms.get(gameRoomId);
   if (!gameRoom) {
@@ -19,7 +20,8 @@ export const playerReadyService = (gameRoomId, uniqueId, io) => {
     gameRoom.maxPlayers === gameRoom.members.length
   ) {
     gameRoom.isGameStarted = true;
-    io.to(gameRoomId).emit("gameStarted", true);
+    questions = await fetchQuestions(gameRoom.category);
+    io.to(gameRoomId).emit("gameStarted", questions);
   }
 };
 export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
@@ -31,7 +33,7 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
     return;
   }
   userObject.answered = answer;
-  const currentQuestion = sampleQuestions[gameRoom.currentQuestionIndex];
+  const currentQuestion = questions[gameRoom.currentQuestionIndex];
   if (currentQuestion.correctAnswer === answer) {
     userObject.points = userObject.points + 5;
   }
@@ -46,7 +48,7 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
     }
     gameRoom.questionDuration = 10;
 
-    if (gameRoom.currentQuestionIndex < sampleQuestions.length - 1) {
+    if (gameRoom.currentQuestionIndex < questions.length - 1) {
       io.to(gameRoomId).emit("nextQuestionReady", {
         scores: gameRoom.scores,
       });
@@ -83,7 +85,7 @@ export const playAgainService = (gameRoomId, io) => {
 
 export const nextQuestionService = (gameRoomId, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
-  if (gameRoom.currentQuestionIndex < sampleQuestions.length - 1) {
+  if (gameRoom.currentQuestionIndex < questions.length - 1) {
     gameRoom.currentQuestionIndex++;
     gameRoom.scores.forEach((score) => {
       score.answered = null;
