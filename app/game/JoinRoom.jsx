@@ -18,7 +18,7 @@ const JoinRoom = ({ setOption, socket, error }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!socket) return;
-    socket.emit("joinGroup", formData.name, formData.roomCode);
+    socket.emit("joinGroup", formData.name, formData.roomCode.toUpperCase());
   };
 
   return (
@@ -83,7 +83,7 @@ const JoinRoom = ({ setOption, socket, error }) => {
               value={formData.roomCode}
               onChange={handleChange}
               required
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all font-mono"
+              className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all font-mono "
               placeholder="Enter room code"
             />
           </div>

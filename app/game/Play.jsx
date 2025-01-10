@@ -54,11 +54,9 @@ const Play = ({
     });
     socket.on("gameEnded", (data) => {
       setGameEnded(true);
-      setResults(data);
+      setResults(data.scores);
     });
     socket.on("gameRestarted", (data) => {
-      console.log("lool");
-      console.log("gameRestarted", data);
       setGameRoomData(data);
       setGameEnded(false);
       setResults(null);
@@ -133,7 +131,6 @@ const Play = ({
                   <Answers
                     results={results}
                     gameRoomData={gameRoomData}
-                    currentQuestion={currentQuestion}
                     gameEnded={gameEnded}
                     socket={socket}
                     setSelectedOption={setSelectedOption}

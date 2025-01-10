@@ -2,7 +2,6 @@ import { Crown } from "lucide-react";
 const Answers = ({
   results,
   gameRoomData,
-  currentQuestion,
   gameEnded,
   socket,
   setSelectedOption,

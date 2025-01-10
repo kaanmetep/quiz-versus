@@ -7,7 +7,9 @@ const Header = ({ gameRoomData }) => {
             Quiz Room: {gameRoomData.id}
           </h1>
           <p className="text-slate-400 mt-1 font-inter">
-            Category: {gameRoomData.category}
+            Category:{" "}
+            {gameRoomData.category[0].toUpperCase() +
+              gameRoomData.category.slice(1)}
           </p>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col gap-2">
