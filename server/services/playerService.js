@@ -82,7 +82,9 @@ export const playAgainService = (gameRoomId, io) => {
   if (gameRoom.timer) {
     clearInterval(gameRoom.timer);
   }
-
+  if (gameRoom.betweenQuestionsTimer) {
+    clearInterval(gameRoom.betweenQuestionsTimer);
+  }
   gameRoom.currentQuestionIndex = 0;
   gameRoom.scores.forEach((score) => {
     score.answered = null;
@@ -96,16 +98,35 @@ export const playAgainService = (gameRoomId, io) => {
 
 export const nextQuestionService = (gameRoomId, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
+  if (gameRoom.betweenQuestionsTimer) {
+    clearInterval(gameRoom.betweenQuestionsTimer);
+  }
+  io.to(gameRoomId).emit(
+    "betweenQuestionsDuration",
+    gameRoom.betweenQuestionsDuration
+  );
   if (gameRoom.currentQuestionIndex < questions.length - 1) {
-    gameRoom.currentQuestionIndex++;
-    gameRoom.scores.forEach((score) => {
-      score.answered = null;
-    });
-    gameRoom.questionDuration = 10;
-    io.to(gameRoomId).emit("nextQuestion", {
-      currentQuestionIndex: gameRoom.currentQuestionIndex,
-      scores: gameRoom.scores,
-    });
+    gameRoom.betweenQuestionsTimer = setInterval(() => {
+      gameRoom.betweenQuestionsDuration -= 1;
+      if (gameRoom.betweenQuestionsDuration < 0) {
+        clearInterval(gameRoom.betweenQuestionsTimer);
+        gameRoom.betweenQuestionsDuration = 5;
+        gameRoom.currentQuestionIndex++;
+        gameRoom.scores.forEach((score) => {
+          score.answered = null;
+        });
+        gameRoom.questionDuration = 10;
+        io.to(gameRoomId).emit("nextQuestion", {
+          currentQuestionIndex: gameRoom.currentQuestionIndex,
+          scores: gameRoom.scores,
+        });
+        return;
+      }
+      io.to(gameRoomId).emit(
+        "betweenQuestionsDuration",
+        gameRoom.betweenQuestionsDuration
+      );
+    }, 1000);
   }
 };
 // buttonClicked is true when user clicks the leave room button. otherwise it means user disconnected from the socket. (closed the browser)
@@ -125,7 +146,9 @@ export const userLeaveService = (buttonClicked = false, socket) => {
       if (gameRoom.timer) {
         clearInterval(gameRoom.timer);
       }
-
+      if (gameRoom.betweenQuestionsTimer) {
+        clearInterval(gameRoom.betweenQuestionsTimer);
+      }
       // Remove member
       group.members.splice(memberIndex, 1);
 

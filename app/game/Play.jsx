@@ -25,6 +25,8 @@ const Play = ({
   const [remainingTime, setRemainingTime] = useState(null);
   const [questions, setQuestions] = useState(null);
   const [correctAnswer, setCorrectAnswer] = useState(null);
+  console.log(questions);
+  const totalQuestions = questions?.length;
   const currentQuestion = questions
     ? questions[gameRoomData.currentQuestionIndex]
     : null;
@@ -41,7 +43,7 @@ const Play = ({
       setResults(data.scores);
       setCorrectAnswer(data.correctAnswer);
       setSelectedOption(null);
-    });
+    }); // Between 2 questions. Showing answers to the users.
     socket.on("nextQuestion", (data) => {
       setGameRoomData((prev) => ({
         ...prev,
@@ -51,7 +53,8 @@ const Play = ({
       setNextQuestion(false);
       setResults(null);
       setSelectedOption(null);
-    });
+      socket.emit("startTimer", gameRoomData.id);
+    }); // To pass the next question. No showing answers anymore.
     socket.on("gameEnded", (data) => {
       setGameEnded(true);
       setResults(data.scores);
@@ -146,6 +149,7 @@ const Play = ({
                     uniqueId={uniqueId}
                     remainingTime={remainingTime}
                     gameEnded={gameEnded}
+                    totalQuestions={totalQuestions}
                   />
                 )
               ) : (

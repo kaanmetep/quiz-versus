@@ -5,3 +5,8 @@
 // user'in socketid ve unique id'sini localstorageye belirli bir sureyle kaydedebiliriz...!
 
 // bir oda olusturulurken oda id'lerinin cakismamasina dikkat et.
+
+// kacinci soruda oldugumuz gozuksun --> done
+
+// diger soruya 5 saniye bekleyip gecsin.
+Next question in 5 .. 4 .. 3 .. 2 .. 1
