@@ -1,14 +1,14 @@
 "use client";
 import io from "socket.io-client";
 import { useEffect, useState } from "react";
-import CreateRoom from "./CreateRoom";
-import JoinRoom from "./JoinRoom";
+import CreateRoom from "../components/CreateRoom";
+import JoinRoom from "../components/CreateRoom";
+import Play from "../components/Play";
 const socketURL =
   process.env.NODE_ENV === "production"
     ? "https://quiz-versus.onrender.com"
     : "http://localhost:3000";
 
-import Play from "./Play";
 const Page = () => {
   const [socket, setSocket] = useState(null);
   const [option, setOption] = useState(null);

@@ -200,6 +200,7 @@ export const userLeaveService = (buttonClicked = false, socket) => {
 
       if (gameRoom.members.length < 1) {
         gameRooms.delete(groupId);
+        gameQuestions.delete(groupId);
       }
       break;
     }

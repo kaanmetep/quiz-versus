@@ -15,6 +15,13 @@ const inter = Inter({
 export const metadata = {
   title: "Quiz Versus",
   description: "Real-time quiz battle with friends!",
+  appleWebApp: {
+    statusBarStyle: "black-translucent",
+  },
+};
+export const viewport = {
+  themeColor:
+    "linear-gradient(to right, rgba(31, 41, 55, 0.7), rgba(23, 27, 36, 0.7))",
 };
 
 export default function RootLayout({ children }) {
