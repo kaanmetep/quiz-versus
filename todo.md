@@ -9,4 +9,4 @@
 // kacinci soruda oldugumuz gozuksun --> done
 
 // diger soruya 5 saniye bekleyip gecsin.
-Next question in 5 .. 4 .. 3 .. 2 .. 1
+Next question in 5 .. 4 .. 3 .. 2 .. 1 --> done

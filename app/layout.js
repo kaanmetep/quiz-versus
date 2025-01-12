@@ -18,10 +18,12 @@ export const metadata = {
   appleWebApp: {
     statusBarStyle: "black-translucent",
   },
+  viewport: {
+    themeColor: "#1F2937",
+  },
 };
 export const viewport = {
-  themeColor:
-    "linear-gradient(to right, rgba(31, 41, 55, 0.7), rgba(23, 27, 36, 0.7))",
+  themeColor: "#1F2937",
 };
 
 export default function RootLayout({ children }) {
