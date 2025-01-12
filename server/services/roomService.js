@@ -3,7 +3,7 @@ import { createGameRoom } from "../models/GameRoom.js";
 import { gameRooms } from "../../server.mjs";
 import { sendGameRoomToClient } from "../models/GameRoom.js";
 import { users } from "../../server.mjs";
-import { sampleQuestions } from "../../app/game/questions.js";
+import { gameQuestions } from "../../server.mjs";
 export const createGameRoomService = (name, category, maxPlayers, socket) => {
   const roomId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 5)();
   const gameRoom = createGameRoom(
@@ -45,7 +45,7 @@ export const joinGameRoomService = (name, groupId, socket, io) => {
 };
 export const startTimerService = (gameRoomId, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
-
+  const questions = gameQuestions.get(gameRoomId);
   // Clear any existing timer first
   if (gameRoom.timer) {
     clearInterval(gameRoom.timer);
@@ -60,7 +60,7 @@ export const startTimerService = (gameRoomId, io) => {
     if (gameRoom.questionDuration < 0) {
       clearInterval(gameRoom.timer);
       gameRoom.questionDuration = 10;
-      if (gameRoom.currentQuestionIndex < sampleQuestions.length - 1) {
+      if (gameRoom.currentQuestionIndex < questions.length - 1) {
         io.to(gameRoomId).emit("nextQuestionReady", {
           scores: gameRoom.scores,
         });

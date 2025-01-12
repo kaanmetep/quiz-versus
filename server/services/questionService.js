@@ -15,7 +15,6 @@ export const fetchQuestions = async (category) => {
       console.error("Error fetching questions:", error);
       return null;
     }
-    console.log("Fetched questions:", data);
     return data;
   } catch (error) {
     console.error("Error in fetchQuestions:", error);

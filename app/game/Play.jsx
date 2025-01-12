@@ -25,7 +25,6 @@ const Play = ({
   const [remainingTime, setRemainingTime] = useState(null);
   const [questions, setQuestions] = useState(null);
   const [correctAnswer, setCorrectAnswer] = useState(null);
-  console.log(questions);
   const totalQuestions = questions?.length;
   const currentQuestion = questions
     ? questions[gameRoomData.currentQuestionIndex]
@@ -39,7 +38,7 @@ const Play = ({
       }));
     });
     socket.on("nextQuestionReady", (data) => {
-      setNextQuestion(true);
+      setNextQuestion(true); // TODO: change its name to showAnswers
       setResults(data.scores);
       setCorrectAnswer(data.correctAnswer);
       setSelectedOption(null);
@@ -58,6 +57,7 @@ const Play = ({
     socket.on("gameEnded", (data) => {
       setGameEnded(true);
       setResults(data.scores);
+      setCorrectAnswer(data.correctAnswer);
     });
     socket.on("gameRestarted", (data) => {
       setGameRoomData(data);
@@ -69,7 +69,6 @@ const Play = ({
       setCountdown(null);
     });
     socket.on("gameStarted", (data) => {
-      console.log("gameStarted", data);
       setQuestions(data);
       let count = 3;
       setCountdown(count);

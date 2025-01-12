@@ -9,12 +9,20 @@ const Answers = ({
 }) => {
   const [duration, setDuration] = useState(null);
   useEffect(() => {
-    console.log("mounted");
-    socket.emit("nextQuestion", gameRoomData.id);
-    socket.on("betweenQuestionsDuration", (betweenQuestionsDuration) => {
+    if (!gameEnded) {
+      socket.emit("nextQuestion", gameRoomData.id);
+    }
+
+    const handleDuration = (betweenQuestionsDuration) => {
       setDuration(betweenQuestionsDuration);
-    });
-  }, []);
+    };
+
+    socket.on("betweenQuestionsDuration", handleDuration);
+
+    return () => {
+      socket.off("betweenQuestionsDuration", handleDuration);
+    };
+  }, [gameEnded, gameRoomData.id, socket]);
   const onPlayAgainClick = () => {
     socket.emit("playAgain", gameRoomData.id);
   };
@@ -80,11 +88,15 @@ const Answers = ({
       {gameEnded && (
         <p className="text-slate-400 mt-8 text-xl font-semibold">Game ended!</p>
       )}
-      <p className="tabular-nums mt-6">Next question in {duration}...</p>
+      {!gameEnded && (
+        <p className="text-2xl font-semibold text-slate-200 mb-4 tracking-wide font-orbitron tabular-nums   mt-6">
+          Next question in {duration}...
+        </p>
+      )}
       {gameEnded && (
         <button
           className="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 text-white rounded-xl px-6 py-2 font-semibold tracking-wide hover:shadow-[0_0_30px_rgba(37,_99,_235,_0.5)] transition-all duration-300 hover:scale-[1.02] border border-blue-400/20 disabled:opacity-50 disabled:cursor-not-allowed mt-12"
-          onClick={onPlayAgainClick()}
+          onClick={onPlayAgainClick}
         >
           Play Again
         </button>

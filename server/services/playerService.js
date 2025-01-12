@@ -2,7 +2,8 @@ import { gameRooms } from "../../server.mjs";
 import { sendGameRoomToClient } from "../models/GameRoom.js";
 import { users } from "../../server.mjs";
 import { fetchQuestions } from "./questionService.js";
-let questions = [];
+import { gameQuestions } from "../../server.mjs";
+
 export const playerReadyService = async (gameRoomId, uniqueId, io) => {
   const userId = uniqueId;
   const gameRoom = gameRooms.get(gameRoomId);
@@ -20,20 +21,25 @@ export const playerReadyService = async (gameRoomId, uniqueId, io) => {
     gameRoom.maxPlayers === gameRoom.members.length
   ) {
     gameRoom.isGameStarted = true;
-    questions = await fetchQuestions(gameRoom.category);
-    io.to(gameRoomId).emit(
-      "gameStarted",
-      questions.map((q) => ({
-        id: q.id,
-        question: q.question,
-        options: q.options,
-        category_id: q.category_id,
-      }))
-    );
+    const fetchedQuestions = await fetchQuestions(gameRoom.category);
+    if (fetchedQuestions) {
+      gameQuestions.set(gameRoomId, fetchedQuestions);
+      io.to(gameRoomId).emit(
+        "gameStarted",
+        fetchedQuestions.map((q) => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          category_id: q.category_id,
+        }))
+      );
+    }
   }
 };
 export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
+  const questions = gameQuestions.get(gameRoomId);
+
   const userObject = gameRoom.scores.find(
     (score) => score.memberId === uniqueId
   );
@@ -57,8 +63,6 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
     gameRoom.questionDuration = 10;
 
     if (gameRoom.currentQuestionIndex < questions.length - 1) {
-      console.log(gameRoom.currentQuestionIndex);
-      console.log(questions[gameRoom.currentQuestionIndex]);
       io.to(gameRoomId).emit("nextQuestionReady", {
         scores: gameRoom.scores,
         correctAnswer: questions[gameRoom.currentQuestionIndex].correctAnswer,
@@ -66,6 +70,7 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
     } else {
       io.to(gameRoomId).emit("gameEnded", {
         scores: gameRoom.scores,
+        correctAnswer: questions[gameRoom.currentQuestionIndex].correctAnswer,
       });
     }
   }
@@ -75,6 +80,7 @@ export const playerAnswerService = (gameRoomId, uniqueId, answer, io) => {
     scores: gameRoom.scores,
   });
 };
+
 export const playAgainService = (gameRoomId, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
 
@@ -93,11 +99,14 @@ export const playAgainService = (gameRoomId, io) => {
   gameRoom.readyPlayers = [];
   gameRoom.isGameStarted = false;
   gameRoom.questionDuration = 10;
+  gameQuestions.delete(gameRoomId); // Clear the questions for this room
   io.to(gameRoomId).emit("gameRestarted", sendGameRoomToClient(gameRoom));
 };
 
 export const nextQuestionService = (gameRoomId, io) => {
   const gameRoom = gameRooms.get(gameRoomId);
+  const questions = gameQuestions.get(gameRoomId);
+
   if (gameRoom.betweenQuestionsTimer) {
     clearInterval(gameRoom.betweenQuestionsTimer);
   }
@@ -129,6 +138,7 @@ export const nextQuestionService = (gameRoomId, io) => {
     }, 1000);
   }
 };
+
 // buttonClicked is true when user clicks the leave room button. otherwise it means user disconnected from the socket. (closed the browser)
 export const userLeaveService = (buttonClicked = false, socket) => {
   if (!buttonClicked) {

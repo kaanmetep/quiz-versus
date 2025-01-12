@@ -19,6 +19,8 @@ import { createUser } from "./server/models/User.js";
 export const gameRooms = new Map();
 export const users = new Map();
 const connectionCounts = new Map();
+// Store questions for each game room separately
+export const gameQuestions = new Map();
 const LIMITS = {
   MAX_CONNECTIONS_PER_IP: 5,
   CONNECTION_TIMEOUT: 1000 * 60 * 60, // 1 saat

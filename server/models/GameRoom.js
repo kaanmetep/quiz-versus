@@ -17,7 +17,7 @@ export const createGameRoom = (
     isGameStarted: false,
     questionDuration: 10,
     timer: null,
-    betweenQuestionsDuration: 5,
+    betweenQuestionsDuration: 2,
     betweenQuestionsTimer: null,
   };
   return group;
