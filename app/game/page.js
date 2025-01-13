@@ -2,7 +2,7 @@
 import io from "socket.io-client";
 import { useEffect, useState } from "react";
 import CreateRoom from "../components/CreateRoom";
-import JoinRoom from "../components/CreateRoom";
+import JoinRoom from "../components/JoinRoom";
 import Play from "../components/Play";
 const socketURL =
   process.env.NODE_ENV === "production"
