@@ -67,6 +67,7 @@ export const startTimerService = (gameRoomId, io) => {
       } else {
         io.to(gameRoomId).emit("gameEnded", {
           scores: gameRoom.scores,
+          correctAnswer: questions[gameRoom.currentQuestionIndex].correctAnswer,
         });
       }
       return;
