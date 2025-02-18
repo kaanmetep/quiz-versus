@@ -42,6 +42,7 @@ const Play = ({
       setResults(data.scores);
       setCorrectAnswer(data.correctAnswer);
       setSelectedOption(null);
+      setRemainingTime(10); // This is a temp. solution. To not show the previous time even for a half second. find a better solution later.
     }); // Between 2 questions. Showing answers to the users.
     socket.on("nextQuestion", (data) => {
       setGameRoomData((prev) => ({
