@@ -1,14 +1,12 @@
 "use client";
-
 import { useState } from "react";
 
 const CreateRoom = ({ setOption, socket }) => {
   const [formData, setFormData] = useState({
-    name: "",
-    players: "2",
+    playerName: "",
+    numberOfPlayers: "2",
     category: "general",
   });
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -19,14 +17,13 @@ const CreateRoom = ({ setOption, socket }) => {
   const onCreateGame = () => {
     socket?.emit(
       "createGameRoom",
-      formData.name,
+      formData.playerName,
       formData.category,
-      Number(formData.players)
+      Number(formData.numberOfPlayers)
     );
   };
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Form submission logic here
     onCreateGame();
   };
 
@@ -68,9 +65,9 @@ const CreateRoom = ({ setOption, socket }) => {
             </label>
             <input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="playerName"
+              name="playerName"
+              value={formData.playerName}
               onChange={handleChange}
               required
               className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"
@@ -87,8 +84,8 @@ const CreateRoom = ({ setOption, socket }) => {
             </label>
             <select
               id="players"
-              name="players"
-              value={formData.players}
+              name="numberOfPlayers"
+              value={formData.numberOfPlayers}
               onChange={handleChange}
               required
               className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all"

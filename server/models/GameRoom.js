@@ -1,38 +1,42 @@
+import {
+  QUESTION_DURATION,
+  BETWEEN_QUESTIONS_DURATION,
+} from "../../constans.js";
 import { users } from "../../server.mjs";
 export const createGameRoom = (
   socketId,
-  name,
+  playerName,
   category,
-  maxPlayers,
+  numberOfPlayers,
   roomId
 ) => {
   const group = {
     id: roomId,
-    members: [{ memberId: users.get(socketId), socketId, name }],
+    members: [{ memberId: users.get(socketId), socketId, playerName }],
     readyPlayers: [],
-    category: category,
-    maxPlayers: maxPlayers,
+    category,
+    numberOfPlayers: numberOfPlayers,
     currentQuestionIndex: 0,
     scores: [{ memberId: users.get(socketId), points: 0, answered: null }],
     isGameStarted: false,
-    questionDuration: 10,
+    questionDuration: QUESTION_DURATION,
     timer: null,
-    betweenQuestionsDuration: 5,
     betweenQuestionsTimer: null,
+    betweenQuestionsDuration: BETWEEN_QUESTIONS_DURATION,
   };
   return group;
 };
 
-// WHY we have this function?
+// WHY do we have this function?
 // Because we don't want to send the socketId to the client. Thats why we map members to only send the name and memberId.
 // we also don't want to send the isGameStarted to the client. its no necessary atm.
 export const sendGameRoomToClient = (gameRoom) => {
   return {
     id: gameRoom.id,
     category: gameRoom.category,
-    maxPlayers: gameRoom.maxPlayers,
+    numberOfPlayers: gameRoom.numberOfPlayers,
     members: gameRoom.members.map((member) => ({
-      name: member.name,
+      playerName: member.playerName,
       memberId: member.memberId,
     })),
     readyPlayers: gameRoom.readyPlayers,

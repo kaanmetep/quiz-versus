@@ -14,7 +14,8 @@ const Header = ({ gameRoomData }) => {
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col gap-2">
           <p className="text-slate-300 text-sm font-inter">
-            Players: {gameRoomData.members.length}/{gameRoomData.maxPlayers}
+            Players: {gameRoomData.members.length}/
+            {gameRoomData.numberOfPlayers}
           </p>
           <p className="text-slate-300 text-sm font-inter">
             Players ready: {gameRoomData.readyPlayers.length}/

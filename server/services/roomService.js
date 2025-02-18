@@ -4,25 +4,47 @@ import { gameRooms } from "../../server.mjs";
 import { sendGameRoomToClient } from "../models/GameRoom.js";
 import { users } from "../../server.mjs";
 import { gameQuestions } from "../../server.mjs";
-export const createGameRoomService = (name, category, maxPlayers, socket) => {
-  const roomId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 5)();
+import { QUESTION_DURATION } from "../../constans.js";
+export const createGameRoomService = (
+  playerName,
+  category,
+  numberOfPlayers,
+  socket
+) => {
+  // first, we check if created roomId already exist.
+  let roomId;
+  do {
+    roomId = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", 5)();
+  } while (gameRooms.get(roomId));
+
   const gameRoom = createGameRoom(
     socket.id,
-    name,
+    playerName,
     category,
-    maxPlayers,
+    numberOfPlayers,
     roomId
   );
   gameRooms.set(roomId, gameRoom);
   socket.join(roomId);
   socket.emit("gameRoomCreated", sendGameRoomToClient(gameRoom));
 };
-export const joinGameRoomService = (name, groupId, socket, io) => {
+
+export const joinGameRoomService = (playerName, groupId, socket, io) => {
   const gameRoom = gameRooms.get(groupId);
+  if (!gameRoom) {
+    socket.emit("joinedGroup", {
+      status: false,
+      message: "Game room does not exist!",
+    });
+  }
   const socketId = socket.id;
-  if (gameRoom && gameRoom.members.length < gameRoom.maxPlayers) {
+  if (gameRoom && gameRoom.members.length < gameRoom.numberOfPlayers) {
     socket.join(groupId);
-    gameRoom.members.push({ memberId: users.get(socketId), socketId, name });
+    gameRoom.members.push({
+      memberId: users.get(socketId),
+      socketId,
+      playerName,
+    });
     gameRoom.scores.push({
       memberId: users.get(socketId),
       points: 0,
@@ -30,13 +52,7 @@ export const joinGameRoomService = (name, groupId, socket, io) => {
     });
     io.to(groupId).emit("joinedGroup", sendGameRoomToClient(gameRoom));
   }
-  if (!gameRoom) {
-    socket.emit("joinedGroup", {
-      status: false,
-      message: "Game room does not exist!",
-    });
-  }
-  if (gameRoom && gameRoom.members.length >= gameRoom.maxPlayers) {
+  if (gameRoom && gameRoom.members.length >= gameRoom.numberOfPlayers) {
     socket.emit("joinedGroup", {
       status: false,
       message: "This room is full!",
@@ -59,10 +75,11 @@ export const startTimerService = (gameRoomId, io) => {
 
     if (gameRoom.questionDuration < 0) {
       clearInterval(gameRoom.timer);
-      gameRoom.questionDuration = 10;
+      gameRoom.questionDuration = QUESTION_DURATION;
       if (gameRoom.currentQuestionIndex < questions.length - 1) {
         io.to(gameRoomId).emit("nextQuestionReady", {
           scores: gameRoom.scores,
+          correctAnswer: questions[gameRoom.currentQuestionIndex].correctAnswer,
         });
       } else {
         io.to(gameRoomId).emit("gameEnded", {

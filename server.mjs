@@ -1,7 +1,6 @@
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
-
 import {
   createGameRoomService,
   joinGameRoomService,
@@ -17,15 +16,18 @@ import {
 import { createUser } from "./server/models/User.js";
 
 export const gameRooms = new Map();
+
 export const users = new Map();
-const connectionCounts = new Map();
+
+// const connectionCounts = new Map();
+
 // Store questions for each game room separately
 export const gameQuestions = new Map();
 
-const LIMITS = {
-  MAX_CONNECTIONS_PER_IP: 5,
-  CONNECTION_TIMEOUT: 1000 * 60 * 60, // 1 saat
-};
+// const LIMITS = {
+//   MAX_CONNECTIONS_PER_IP: 5,
+//   CONNECTION_TIMEOUT: 1000 * 60 * 60, // 1 saat
+// };
 
 const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
@@ -72,14 +74,14 @@ app.prepare().then(() => {
   // });
 
   io.on("connection", (socket) => {
-    const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id
+    const uniqueId = createUser(socket.id); // to create a user with a unique id and we can keep track of the user without using the socket id.
     socket.emit("uniqueId", uniqueId); // TODO: send unique id to the client only when its asked from the client side! (it might cause some bugs otherwise.. or it might not)
 
-    socket.on("createGameRoom", (name, category, maxPlayers) => {
-      createGameRoomService(name, category, maxPlayers, socket);
+    socket.on("createGameRoom", (playerName, category, numberOfPlayers) => {
+      createGameRoomService(playerName, category, numberOfPlayers, socket);
     });
-    socket.on("joinGroup", (name, groupId) => {
-      joinGameRoomService(name, groupId, socket, io);
+    socket.on("joinGameRoom", (playerName, groupId) => {
+      joinGameRoomService(playerName, groupId, socket, io);
     });
     socket.on("playerReady", (gameRoomId, uniqueId) => {
       playerReadyService(gameRoomId, uniqueId, io);

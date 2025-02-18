@@ -50,7 +50,7 @@ const Answers = ({
                 {
                   gameRoomData?.members?.find(
                     (member) => member.memberId === score.memberId
-                  )?.name
+                  )?.playerName
                 }
               </p>
             </div>

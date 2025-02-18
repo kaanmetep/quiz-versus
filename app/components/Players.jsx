@@ -11,17 +11,17 @@ const Players = ({ gameRoomData, uniqueId, socket }) => {
           Players
         </h2>
         <div className="space-y-3">
-          {gameRoomData?.members?.map(({ name, memberId }, index) => (
+          {gameRoomData?.members?.map(({ playerName, memberId }, index) => (
             <div
               key={index}
               className="flex items-center justify-between space-x-3 bg-white/5 rounded-xl p-3"
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm lg:text-base">
-                  {name && name[0].toUpperCase()}
+                  {playerName && playerName[0].toUpperCase()}
                 </div>
                 <span className="text-slate-200 text-sm lg:text-base">
-                  {name}
+                  {playerName}
                 </span>
               </div>
 

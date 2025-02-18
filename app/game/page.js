@@ -10,9 +10,9 @@ const socketURL =
     : "http://localhost:3000";
 
 const Page = () => {
+  const [gameRoomData, setGameRoomData] = useState(null);
   const [socket, setSocket] = useState(null);
   const [option, setOption] = useState(null);
-  const [gameRoomData, setGameRoomData] = useState(null);
   const [error, setError] = useState("");
   const [uniqueId, setUniqueId] = useState(null);
   const [results, setResults] = useState(null);

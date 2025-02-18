@@ -101,7 +101,7 @@ const Play = ({
     setNextQuestion(null);
     setGameEnded(false);
   };
-
+  console.log(countdown);
   return (
     <div className="min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-800/70 via-slate-900 to-slate-800/70 p-6">
       <Header gameRoomData={gameRoomData} />
@@ -116,9 +116,11 @@ const Play = ({
         <div className="lg:col-span-3">
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 h-[500px] lg:h-[600px] flex items-center justify-center relative">
             <div className="text-center w-full max-w-md mx-auto">
-              {gameRoomData?.members?.length !== gameRoomData?.maxPlayers ? (
+              {gameRoomData?.members?.length !==
+              gameRoomData?.numberOfPlayers ? (
                 <RoomNotFull gameRoomData={gameRoomData} />
-              ) : gameRoomData?.members?.length === gameRoomData?.maxPlayers &&
+              ) : gameRoomData?.members?.length ===
+                  gameRoomData?.numberOfPlayers &&
                 gameRoomData?.readyPlayers?.length !==
                   gameRoomData?.members?.length ? (
                 <RoomFullPlayersNotReady />
